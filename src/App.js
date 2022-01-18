@@ -1,50 +1,59 @@
-
-import { useState } from "react";
-import React from 'react';
+import { useState, useEffect } from "react";
+import React from "react";
 import Header from "./components/Header";
 import Tasks from "./components/Tasks";
+import AddTask from "./components/AddTask";
+import axios from "axios";
 
-require('./styles/index.css')
+require("./styles/index.css");
+
+const baseURL = "http://localhost:8080/api/v1/tasks";
 
 function App() {
-    
-    const [tasks, setTasks] = useState ([
-        {
-            id: 1,
-            text: 'Doctors Appointment',
-            day: 'Feb 5th at 2:30pm',
-            reminder: true
-        },
-        {
-            id: 2,
-            text: 'Doctors Appointment',
-            day: 'Feb 5th at 2:30pm',
-            reminder: true
-        },
-        {
-            id: 3,
-            text: 'Doctors Appointment',
-            day: 'Feb 5th at 2:30pm',
-            reminder: true
-        }
-    ])
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [tasks, setTasks] = useState([]);
 
+  useEffect(() => {
+    axios
+      .get(baseURL)
+      .then((response) => {
+        console.log(response);
+        setTasks(response.data);
+      })
+      .catch(() => {
+        console.log("error");
+      });
+  }, []);
 
-    const deleteTask = (id) => {
-        setTasks(tasks.filter((task) => task.id !== id))
-    }
+  const addTask = (task) => {
+    axios
+      .post(baseURL + "/addTask", task)
+      .then((response) => {
+        console.log(response);
+        setTasks([...tasks, response.data]);
+      })
+      .catch(() => {
+        console.log("error");
+      });
 
+    console.log(task);
+  };
 
-    return (
-        <div className="container">
-            <Header/>
-            <Tasks tasks={tasks} onDelete={deleteTask} />
-        </div>
-    )
+  const deleteTask = (id) => {
+    axios
+      .delete(baseURL + "/deleteTask/" + id)
+      .then(() => setTasks(tasks.filter((task) => task.id !== id)));
 
-    
+    console.log("Task deleted : " + id);
+  };
+
+  return (
+    <div className="container">
+      <Header onAdd={() => setShowAddTask(!showAddTask)} />
+      {showAddTask && <AddTask onAddTask={addTask} />}
+      <Tasks tasks={tasks} onDelete={deleteTask} />
+    </div>
+  );
 }
-
-
 
 export default App;
